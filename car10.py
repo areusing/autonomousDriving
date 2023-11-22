@@ -63,7 +63,7 @@ class AnimatedCarWidget(QtWidgets.QWidget):
         )
 
         if near_banana:
-            speed = 15  # reduce speed
+            speed = 10  # reduce speed
             print("1001: reduce speed")  # record the console
         else:
             speed = 25  # Normal speed
