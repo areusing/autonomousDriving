@@ -1,16 +1,43 @@
-
 import sys
 import random
 from PyQt5 import QtWidgets, QtGui, QtCore
-from PyQt5.QtWidgets import QMessageBox
+from PyQt5.QtWidgets import QMessageBox, QPushButton
 import seaborn as sns
 import matplotlib.pyplot as plt
+
 
 class AnimatedCarWidget(QtWidgets.QWidget):
     def __init__(self, parent=None):
         super(AnimatedCarWidget, self).__init__(parent)
         self.crossroad_pixmap = QtGui.QPixmap('Cross_road.png')
         self.car_pixmap = QtGui.QPixmap('car.jpeg').scaledToWidth(50)
+        self.speed = 25 #default speed
+        self.dec_button_pressed = False
+        self.inc_button_pressed = False
+
+        # button to increase speed
+        self.increase_button = QPushButton(self)
+        self.increase_button.setText("+")
+        self.increase_button.move(100, 100)
+        self.increase_button.setGeometry(QtCore.QRect(50, 50, 100, 100))
+        #self.increase_button.setStyleSheet("increase_button { background-color: #262626;"
+        #                              "font-size: 50px;"
+        #                              "color: white;"
+        #                              "border-radius: 30px;} "
+        #                              "QPushButton:pressed { background-color: gray }")
+        self.increase_button.clicked.connect(self.increase_button_pressed)
+
+        # button to decrease speed
+        self.decrease_button = QtWidgets.QPushButton(self)
+        self.decrease_button.setText("-")
+        self.decrease_button.move(100, 100)
+        self.decrease_button.setGeometry(QtCore.QRect(50, 200, 100, 100))
+        #self.decrease_button.setStyleSheet("QPushButton { background-color: #262626;"
+        #                              "font-size: 50px;"
+        #                              "color: white;"
+        #                              "border-radius: 30px;} "
+        #                              "QPushButton:pressed { background-color: gray }")
+        self.decrease_button.clicked.connect(self.decrease_button_pressed)
 
         self.load_banana = self.ask_to_load_image('Add Road Slip?')
         if self.load_banana:
@@ -34,6 +61,12 @@ class AnimatedCarWidget(QtWidgets.QWidget):
         self.positions = []
 
         self.initUI()
+
+    def decrease_button_pressed(self):
+        self.dec_button_pressed = True
+
+    def increase_button_pressed(self):
+        self.inc_button_pressed = True
 
     def ask_to_load_image(self, message):
         reply = QMessageBox.question(self, 'Load Image', message,
@@ -59,14 +92,24 @@ class AnimatedCarWidget(QtWidgets.QWidget):
     def animate(self):
         # Check if the car is over the banana
         near_banana = self.load_banana and (
-            self.banana_rect.left() - 60 <= self.car_position.x() <= self.banana_rect.right()
+                self.banana_rect.left() - 60 <= self.car_position.x() <= self.banana_rect.right()
         )
+        if self.dec_button_pressed:
+            newSpeed = self.speed-1
+            if(newSpeed > 0):
+                self.speed = newSpeed
+                self.dec_button_pressed = False
+                print("Decrease button clicked! New speed:", self.speed)
 
-        if near_banana:
-            speed = 10  # reduce speed
+        if self.inc_button_pressed:
+            newSpeed = self.speed + 1
+            self.speed = newSpeed
+            self.inc_button_pressed = False
+            print("Increase button clicked! New speed:", self.speed)
+
+        if near_banana and self.speed > 10:
+            self.speed = 10  # reduce speed
             print("1001: reduce speed")  # record the console
-        else:
-            speed = 25  # Normal speed
 
         # Check if the car is near the stop sign
         if self.load_stop and self.car_position.x() >= self.stop_position.x() - 80:
@@ -78,7 +121,7 @@ class AnimatedCarWidget(QtWidgets.QWidget):
         self.positions.append((self.car_position.x(), self.car_position.y()))
 
         if not self.middle_point_reached:
-            self.car_position.setX(self.car_position.x() + speed)
+            self.car_position.setX(self.car_position.x() + self.speed)
 
             # When arrive at the middle point
             if self.car_position.x() > 835:
@@ -88,9 +131,9 @@ class AnimatedCarWidget(QtWidgets.QWidget):
         else:
             # when to middle point, move in the chosen direction
             if self.direction == 'right':
-                self.car_position.setX(self.car_position.x() + speed)
+                self.car_position.setX(self.car_position.x() + self.speed)
             else:
-                self.car_position.setY(self.car_position.y() + speed)
+                self.car_position.setY(self.car_position.y() + self.speed)
 
             # When car is out of the window, stop the program
             if (self.direction == 'right' and self.car_position.x() > self.width()) or \
@@ -110,6 +153,7 @@ class AnimatedCarWidget(QtWidgets.QWidget):
         plt.title('Car Track')
         plt.show(block=True)
 
+
 class Example(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
@@ -122,10 +166,12 @@ class Example(QtWidgets.QMainWindow):
         self.setWindowTitle('Crossroad Animation')
         self.show()
 
+
 def main():
     app = QtWidgets.QApplication(sys.argv)
     ex = Example()
     app.exec_()
+
 
 if __name__ == '__main__':
     main()
