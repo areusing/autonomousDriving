@@ -1,7 +1,7 @@
 import sys
 import random
 from PyQt5 import QtWidgets, QtGui, QtCore
-from PyQt5.QtWidgets import QMessageBox, QPushButton
+from PyQt5.QtWidgets import QMessageBox, QPushButton, QLabel
 import seaborn as sns
 import matplotlib.pyplot as plt
 
@@ -15,28 +15,41 @@ class AnimatedCarWidget(QtWidgets.QWidget):
         self.dec_button_pressed = False
         self.inc_button_pressed = False
 
+        # set speed label
+        self.speedInfo = QLabel(str(self.speed) + ' km/h', self)
+        self.speedInfo.move(20, 5)
+        self.speedInfo.setStyleSheet("font-size: 25px;")
+
         # button to increase speed
         self.increase_button = QPushButton(self)
         self.increase_button.setText("+")
-        self.increase_button.move(100, 100)
-        self.increase_button.setGeometry(QtCore.QRect(50, 50, 100, 100))
-        #self.increase_button.setStyleSheet("increase_button { background-color: #262626;"
-        #                              "font-size: 50px;"
-        #                              "color: white;"
-        #                              "border-radius: 30px;} "
-        #                              "QPushButton:pressed { background-color: gray }")
+        self.increase_button.setGeometry(QtCore.QRect(25, 50, 60, 60))
+        self.increase_button.setStyleSheet("QPushButton {"
+                                           "background-color: #e6e6e6;"
+                                           "border-style: outset;"
+                                           "border-width: 2px;"
+                                           "font-size: 25px;"
+                                           "border-radius: 15px;"
+                                           "border-color: black;"
+                                           "padding: 4px;}"
+                                           "QPushButton:pressed {"
+                                           "background-color: gray;}")
         self.increase_button.clicked.connect(self.increase_button_pressed)
 
         # button to decrease speed
         self.decrease_button = QtWidgets.QPushButton(self)
         self.decrease_button.setText("-")
-        self.decrease_button.move(100, 100)
-        self.decrease_button.setGeometry(QtCore.QRect(50, 200, 100, 100))
-        #self.decrease_button.setStyleSheet("QPushButton { background-color: #262626;"
-        #                              "font-size: 50px;"
-        #                              "color: white;"
-        #                              "border-radius: 30px;} "
-        #                              "QPushButton:pressed { background-color: gray }")
+        self.decrease_button.setGeometry(QtCore.QRect(25, 125, 60, 60))
+        self.decrease_button.setStyleSheet("QPushButton {"
+                                           "background-color: #e6e6e6;"
+                                           "border-style: outset;"
+                                           "font-size: 25px;"
+                                           "border-width: 2px;"
+                                           "border-radius: 15px;"
+                                           "border-color: black;"
+                                           "padding: 4px;}"
+                                           "QPushButton:pressed {"
+                                           "background-color: gray;}")
         self.decrease_button.clicked.connect(self.decrease_button_pressed)
 
         self.load_banana = self.ask_to_load_image('Add Road Slip?')
@@ -73,6 +86,10 @@ class AnimatedCarWidget(QtWidgets.QWidget):
                                      QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
         return reply == QMessageBox.Yes
 
+    def change_speed(self, speed_value):
+        self.speed = speed_value
+        return str(self.speed) + ' km/h'
+
     def initUI(self):
         self.setMinimumSize(self.crossroad_pixmap.size())
         self.timer = QtCore.QTimer(self)
@@ -98,17 +115,17 @@ class AnimatedCarWidget(QtWidgets.QWidget):
             newSpeed = self.speed-1
             if(newSpeed > 0):
                 self.speed = newSpeed
+                self.speedInfo.setText(self.change_speed(newSpeed))
                 self.dec_button_pressed = False
-                print("Decrease button clicked! New speed:", self.speed)
 
         if self.inc_button_pressed:
             newSpeed = self.speed + 1
-            self.speed = newSpeed
+            self.change_speed(newSpeed)
+            self.speedInfo.setText(self.change_speed(newSpeed))
             self.inc_button_pressed = False
-            print("Increase button clicked! New speed:", self.speed)
 
         if near_banana and self.speed > 10:
-            self.speed = 10  # reduce speed
+            self.change_speed(10)
             print("1001: reduce speed")  # record the console
 
         # Check if the car is near the stop sign
@@ -162,8 +179,8 @@ class Example(QtWidgets.QMainWindow):
     def initUI(self):
         self.central_widget = AnimatedCarWidget(self)
         self.setCentralWidget(self.central_widget)
-        self.resize(self.central_widget.size())
-        self.setWindowTitle('Crossroad Animation')
+        self.showMaximized()
+        self.setWindowTitle('AutoDriveSim')
         self.show()
 
 
