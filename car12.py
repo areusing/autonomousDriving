@@ -4,7 +4,10 @@ from PyQt5.QtWidgets import QMessageBox, QDialog, QPushButton, QVBoxLayout
 import seaborn as sns
 import matplotlib.pyplot as plt
 
+
 class AnimatedCarWidget(QtWidgets.QWidget):
+    EXIT_CODE_REBOOT = -123
+
     def __init__(self, parent=None):
         super(AnimatedCarWidget, self).__init__(parent)
         self.crossroad_pixmap = QtGui.QPixmap('Cross_road.png')
@@ -24,7 +27,7 @@ class AnimatedCarWidget(QtWidgets.QWidget):
         self.middle_point = 835  # Middle point position
         self.direction = 'right'
         self.middle_point_reached = False
-        self.turning_right = False  # defaiult for turning right
+        self.turning_right = False  # default for turning right
         self.positions = []
 
         self.initUI()
@@ -52,16 +55,17 @@ class AnimatedCarWidget(QtWidgets.QWidget):
 
     def animate(self):
         near_banana = self.load_banana and (
-            self.banana_rect.left() - 60 <= self.car_position.x() <= self.banana_rect.right()
+                self.banana_rect.left() - 60 <= self.car_position.x() <= self.banana_rect.right()
         )
 
         if near_banana:
-            speed = 15
+            speed = 10
         else:
             speed = 25
 
         if self.load_stop and self.car_position.x() >= self.stop_position.x() - 80:
             self.timer.stop()
+            self.destination_query()
             self.plot_track()
             return
 
@@ -91,11 +95,38 @@ class AnimatedCarWidget(QtWidgets.QWidget):
                 self.car_position.setY(self.car_position.y() + speed)
 
             if (self.direction == 'right' and self.car_position.x() > self.width()) or \
-               (self.direction == 'down' and self.car_position.y() > self.height()):
+                    (self.direction == 'down' and self.car_position.y() > self.height()):
                 self.timer.stop()
+                self.destination_query()
                 self.plot_track()
 
         self.update()
+
+    def destination_query(self):
+        self.dialog = QDialog(self)
+        self.dialog.setWindowTitle('Destination Reached')
+        layout = QVBoxLayout()
+
+        btn_restart = QPushButton('Restart', self.dialog)
+        btn_restart.clicked.connect(self.destination_reached)
+        layout.addWidget(btn_restart)
+
+        btn_quit = QPushButton('Quit', self.dialog)
+        btn_quit.clicked.connect(self.destination_reached)
+        layout.addWidget(btn_quit)
+
+        self.dialog.setLayout(layout)
+        self.dialog.exec_()
+
+    def destination_reached(self):
+        sender = self.sender()
+
+        if sender.text() == 'Restart':
+            self.dialog.close()
+            QtWidgets.QApplication.exit(AnimatedCarWidget.EXIT_CODE_REBOOT)
+        else:
+            self.timer.stop()
+            sys.exit()
 
     def show_direction_dialog(self):
         self.dialog = QDialog(self)
@@ -132,6 +163,7 @@ class AnimatedCarWidget(QtWidgets.QWidget):
         plt.title('Car Track')
         plt.show(block=True)
 
+
 class Example(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
@@ -144,10 +176,15 @@ class Example(QtWidgets.QMainWindow):
         self.setWindowTitle('Crossroad Animation')
         self.show()
 
+
 def main():
-    app = QtWidgets.QApplication(sys.argv)
-    ex = Example()
-    app.exec_()
+    exitCode = AnimatedCarWidget.EXIT_CODE_REBOOT
+    while exitCode == AnimatedCarWidget.EXIT_CODE_REBOOT:
+        app = QtWidgets.QApplication(sys.argv)
+        ex = Example()
+        exitCode = app.exec_()
+    sys.exit(app.exec_())
+
 
 if __name__ == '__main__':
     main()

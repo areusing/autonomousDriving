@@ -1,17 +1,18 @@
 import sys
-import random
 from PyQt5 import QtWidgets, QtGui, QtCore
-from PyQt5.QtWidgets import QMessageBox, QPushButton, QLabel
+from PyQt5.QtWidgets import QMessageBox, QPushButton, QLabel, QDialog, QVBoxLayout
 import seaborn as sns
 import matplotlib.pyplot as plt
 
 
 class AnimatedCarWidget(QtWidgets.QWidget):
+    EXIT_CODE_REBOOT = -123  # for restarting application
+
     def __init__(self, parent=None):
         super(AnimatedCarWidget, self).__init__(parent)
         self.crossroad_pixmap = QtGui.QPixmap('Cross_road.png')
         self.car_pixmap = QtGui.QPixmap('car.jpeg').scaledToWidth(50)
-        self.speed = 25 #default speed
+        self.speed = 25  # default speed
         self.dec_button_pressed = False
         self.inc_button_pressed = False
 
@@ -37,7 +38,7 @@ class AnimatedCarWidget(QtWidgets.QWidget):
         self.increase_button.clicked.connect(self.increase_button_pressed)
 
         # button to decrease speed
-        self.decrease_button = QtWidgets.QPushButton(self)
+        self.decrease_button = QPushButton(self)
         self.decrease_button.setText("-")
         self.decrease_button.setGeometry(QtCore.QRect(25, 125, 60, 60))
         self.decrease_button.setStyleSheet("QPushButton {"
@@ -63,12 +64,15 @@ class AnimatedCarWidget(QtWidgets.QWidget):
             self.stop_position = QtCore.QPoint(1100, 530)  # Stop image position
 
         self.car_position = QtCore.QPoint(110, 530)
+        self.middle_point = 835
 
         # Initial direction is right
         self.direction = 'right'
 
         # When car has reached the middle
         self.middle_point_reached = False
+
+        self.turning_right = False
 
         # Record positions
         self.positions = []
@@ -112,8 +116,8 @@ class AnimatedCarWidget(QtWidgets.QWidget):
                 self.banana_rect.left() - 60 <= self.car_position.x() <= self.banana_rect.right()
         )
         if self.dec_button_pressed:
-            newSpeed = self.speed-1
-            if(newSpeed > 0):
+            newSpeed = self.speed - 1
+            if newSpeed > 0:
                 self.speed = newSpeed
                 self.speedInfo.setText(self.change_speed(newSpeed))
                 self.dec_button_pressed = False
@@ -132,8 +136,22 @@ class AnimatedCarWidget(QtWidgets.QWidget):
         if self.load_stop and self.car_position.x() >= self.stop_position.x() - 80:
             self.timer.stop()
             print("1002: emergency stop")  # Reporting to the console
+            self.destination_query()
             self.plot_track()  # Plot the trajectory
             return  # Stop the animation
+
+        if not self.middle_point_reached and self.car_position.x() >= self.middle_point - 80:
+            self.timer.stop()
+            self.show_direction_dialog()
+            return
+
+        if self.turning_right and self.car_position.x() < self.middle_point + 80:
+            self.car_position.setX(self.car_position.x() + self.speed)
+            if self.car_position.x() >= self.middle_point + 0:
+                self.direction = 'down'
+                self.turning_right = False
+            self.update()
+            return
 
         self.positions.append((self.car_position.x(), self.car_position.y()))
 
@@ -143,22 +161,75 @@ class AnimatedCarWidget(QtWidgets.QWidget):
             # When arrive at the middle point
             if self.car_position.x() > 835:
                 self.middle_point_reached = True
-                # Randomly choose turn right or down
-                self.direction = random.choice(['right', 'down'])
         else:
             # when to middle point, move in the chosen direction
             if self.direction == 'right':
                 self.car_position.setX(self.car_position.x() + self.speed)
-            else:
+            elif self.direction == 'down':
                 self.car_position.setY(self.car_position.y() + self.speed)
 
             # When car is out of the window, stop the program
             if (self.direction == 'right' and self.car_position.x() > self.width()) or \
                     (self.direction == 'down' and self.car_position.y() > self.height()):
                 self.timer.stop()
+                self.destination_query()
                 self.plot_track()  # Plot the trajectory
 
         self.update()
+
+    def destination_query(self):
+        self.dialog = QDialog(self)
+        self.dialog.setWindowTitle('Destination Reached')
+        layout = QVBoxLayout()
+
+        btn_restart = QPushButton('Restart', self.dialog)
+        btn_restart.clicked.connect(self.destination_reached)
+        layout.addWidget(btn_restart)
+
+        btn_quit = QPushButton('Quit', self.dialog)
+        btn_quit.clicked.connect(self.destination_reached)
+        layout.addWidget(btn_quit)
+
+        self.dialog.setLayout(layout)
+        self.dialog.exec_()
+
+    def destination_reached(self):
+        sender = self.sender()
+
+        if sender.text() == 'Restart':
+            self.dialog.close()
+            QtWidgets.QApplication.exit(
+                AnimatedCarWidget.EXIT_CODE_REBOOT)  # will exit with the exit code set above & stay in while loop of main
+        else:
+            self.timer.stop()
+            sys.exit()
+
+    def show_direction_dialog(self):
+        self.dialog = QDialog(self)
+        self.dialog.setWindowTitle('Choose Direction')
+        layout = QVBoxLayout()
+
+        btn_right = QPushButton('Turn right', self.dialog)
+        btn_right.clicked.connect(self.on_direction_chosen)
+        layout.addWidget(btn_right)
+
+        btn_straight = QPushButton('Go straight', self.dialog)
+        btn_straight.clicked.connect(self.on_direction_chosen)
+        layout.addWidget(btn_straight)
+
+        self.dialog.setLayout(layout)
+        self.dialog.exec_()
+
+    def on_direction_chosen(self):
+        sender = self.sender()
+        if sender.text() == 'Turn right':
+            self.turning_right = True
+            self.middle_point_reached = True
+        else:
+            self.direction = 'right'
+            self.middle_point_reached = True
+        self.dialog.close()
+        self.timer.start()
 
     def plot_track(self):
         # Record the data for seaborn
@@ -185,9 +256,12 @@ class Example(QtWidgets.QMainWindow):
 
 
 def main():
-    app = QtWidgets.QApplication(sys.argv)
-    ex = Example()
-    app.exec_()
+    exitCode = AnimatedCarWidget.EXIT_CODE_REBOOT  # set exit code so code will run
+    while exitCode == AnimatedCarWidget.EXIT_CODE_REBOOT:  # will keep rebooting the program until user selects quit (with different exit code)
+        app = QtWidgets.QApplication(sys.argv)
+        ex = Example()
+        exitCode = app.exec_()
+    sys.exit(app.exec_())
 
 
 if __name__ == '__main__':
