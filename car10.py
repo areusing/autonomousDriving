@@ -4,14 +4,19 @@ from PyQt5.QtWidgets import QMessageBox, QPushButton, QLabel, QDialog, QVBoxLayo
 import seaborn as sns
 import matplotlib.pyplot as plt
 
+from constants import (
+    DEFAULT_USER_VEHICLE_IMG,
+    DEFAULT_NPC_VEHICLE_IMG,
+    DEFAULT_CROSS_ROAD_IMG,
+    DEFAULT_BANANA_IMG,
+    DEFAULT_ROADBLOCK_IMG
+)
+
 
 class AnimatedCarWidget(QtWidgets.QWidget):
     EXIT_CODE_REBOOT = -123  # for restarting application
     
-    # User vehicle
-    DEFAULT_USER_VEHICLE_IMG = 'user_vehicle.png'
-    # NPC vehicle
-    DEFAULT_NPC_VEHICLE_IMG = 'npc_vehicle.png'
+    
     DEFAULT_NPC_SPEED = 20
     DEFAULT_NPC_POSITION_X = {
         'OPPOSITE': 1600,
@@ -34,8 +39,8 @@ class AnimatedCarWidget(QtWidgets.QWidget):
 
     def __init__(self, parent=None):
         super(AnimatedCarWidget, self).__init__(parent)
-        self.crossroad_pixmap = QtGui.QPixmap('Cross_road.png')
-        self.car_pixmap = QtGui.QPixmap(self.DEFAULT_USER_VEHICLE_IMG).scaledToWidth(50)
+        self.crossroad_pixmap = QtGui.QPixmap(DEFAULT_CROSS_ROAD_IMG)
+        self.car_pixmap = QtGui.QPixmap(DEFAULT_USER_VEHICLE_IMG).scaledToWidth(50)
         self.speed = 25  # default speed
         self.npc_speed = self.DEFAULT_NPC_SPEED  # default speed
         self.dec_button_pressed = False
@@ -80,18 +85,18 @@ class AnimatedCarWidget(QtWidgets.QWidget):
 
         self.load_banana = self.ask_to_load_image('Add Road Slip?')
         if self.load_banana:
-            self.banana_pixmap = QtGui.QPixmap('banana.png').scaled(200, 50)
+            self.banana_pixmap = QtGui.QPixmap(DEFAULT_BANANA_IMG).scaled(200, 50)
             self.banana_rect = QtCore.QRect(500, 530, 200, 50)
 
         self.load_stop = self.ask_to_load_image('Add Roadblocks?')
         if self.load_stop:
-            self.stop_pixmap = QtGui.QPixmap('stop.png').scaled(50, 50)
+            self.stop_pixmap = QtGui.QPixmap(DEFAULT_ROADBLOCK_IMG).scaled(50, 50)
             self.stop_position = QtCore.QPoint(1100, 530)  # Stop image position
 
         # Load NPC
         self.load_npc_vehicle = self.ask_to_load_image('Add NPC Vehicle?')
         if self.load_npc_vehicle:
-            self.npc_vehicle_pixmap = QtGui.QPixmap(self.DEFAULT_NPC_VEHICLE_IMG).scaled(50, 50)
+            self.npc_vehicle_pixmap = QtGui.QPixmap(DEFAULT_NPC_VEHICLE_IMG).scaled(50, 50)
             self.npc_vehicle_direction = self.ask_npc_direction()
             if self.npc_vehicle_direction == self.NPC_DIRECTION['OPPOSITE']:
                 self.npc_vehicle_position = QtCore.QPoint(self.DEFAULT_NPC_POSITION_X['OPPOSITE'], self.DEFAULT_NPC_POSITION_Y['OPPOSITE'])

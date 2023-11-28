@@ -4,23 +4,30 @@ from PyQt5.QtWidgets import QMessageBox, QDialog, QPushButton, QVBoxLayout
 import seaborn as sns
 import matplotlib.pyplot as plt
 
+from constants import (
+    DEFAULT_CAR_IMG,
+    DEFAULT_CROSS_ROAD_IMG,
+    DEFAULT_BANANA_IMG,
+    DEFAULT_ROADBLOCK_IMG
+)
+
 
 class AnimatedCarWidget(QtWidgets.QWidget):
     EXIT_CODE_REBOOT = -123
 
     def __init__(self, parent=None):
         super(AnimatedCarWidget, self).__init__(parent)
-        self.crossroad_pixmap = QtGui.QPixmap('Cross_road.png')
-        self.car_pixmap = QtGui.QPixmap('car.jpeg').scaledToWidth(50)
+        self.crossroad_pixmap = QtGui.QPixmap(DEFAULT_CROSS_ROAD_IMG)
+        self.car_pixmap = QtGui.QPixmap(DEFAULT_CAR_IMG).scaledToWidth(50)
 
         self.load_banana = self.ask_to_load_image('Add Road Slip?')
         if self.load_banana:
-            self.banana_pixmap = QtGui.QPixmap('banana.png').scaled(200, 50)
+            self.banana_pixmap = QtGui.QPixmap(DEFAULT_BANANA_IMG).scaled(200, 50)
             self.banana_rect = QtCore.QRect(500, 530, 200, 50)
 
         self.load_stop = self.ask_to_load_image('Add Roadblocks?')
         if self.load_stop:
-            self.stop_pixmap = QtGui.QPixmap('stop.png').scaled(50, 50)
+            self.stop_pixmap = QtGui.QPixmap(DEFAULT_ROADBLOCK_IMG).scaled(50, 50)
             self.stop_position = QtCore.QPoint(1100, 530)  # Stop image position
 
         self.car_position = QtCore.QPoint(110, 530)
