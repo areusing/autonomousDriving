@@ -7,12 +7,37 @@ import matplotlib.pyplot as plt
 
 class AnimatedCarWidget(QtWidgets.QWidget):
     EXIT_CODE_REBOOT = -123  # for restarting application
+    
+    # User vehicle
+    DEFAULT_USER_VEHICLE_IMG = 'user_vehicle.png'
+    # NPC vehicle
+    DEFAULT_NPC_VEHICLE_IMG = 'npc_vehicle.png'
+    DEFAULT_NPC_SPEED = 20
+    DEFAULT_NPC_POSITION_X = {
+        'OPPOSITE': 1600,
+        'CROSS': 845
+    }
+    DEFAULT_NPC_POSITION_Y = {
+        'OPPOSITE': 475,
+        'CROSS': 0
+    }
+    NPC_DIRECTION = {
+        'OPPOSITE': 'opposite',
+        'CROSS': 'cross'
+    }
+    # Log
+    LOG_CODES = {
+        '1001': "Avoidable obstacle detected, reduce speed",
+        '1002': "Unavoidable obstacle detected, emergency stop",
+        '1003': "Potential collision detected, emergency stop"
+    }
 
     def __init__(self, parent=None):
         super(AnimatedCarWidget, self).__init__(parent)
         self.crossroad_pixmap = QtGui.QPixmap('Cross_road.png')
-        self.car_pixmap = QtGui.QPixmap('car.jpeg').scaledToWidth(50)
+        self.car_pixmap = QtGui.QPixmap(self.DEFAULT_USER_VEHICLE_IMG).scaledToWidth(50)
         self.speed = 25  # default speed
+        self.npc_speed = self.DEFAULT_NPC_SPEED  # default speed
         self.dec_button_pressed = False
         self.inc_button_pressed = False
 
@@ -63,6 +88,18 @@ class AnimatedCarWidget(QtWidgets.QWidget):
             self.stop_pixmap = QtGui.QPixmap('stop.png').scaled(50, 50)
             self.stop_position = QtCore.QPoint(1100, 530)  # Stop image position
 
+        # Load NPC
+        self.load_npc_vehicle = self.ask_to_load_image('Add NPC Vehicle?')
+        if self.load_npc_vehicle:
+            self.npc_vehicle_pixmap = QtGui.QPixmap(self.DEFAULT_NPC_VEHICLE_IMG).scaled(50, 50)
+            self.npc_vehicle_direction = self.ask_npc_direction()
+            if self.npc_vehicle_direction == self.NPC_DIRECTION['OPPOSITE']:
+                self.npc_vehicle_position = QtCore.QPoint(self.DEFAULT_NPC_POSITION_X['OPPOSITE'], self.DEFAULT_NPC_POSITION_Y['OPPOSITE'])
+            elif self.npc_vehicle_direction == self.NPC_DIRECTION['CROSS']:
+                self.npc_vehicle_position = QtCore.QPoint(self.DEFAULT_NPC_POSITION_X['CROSS'], self.DEFAULT_NPC_POSITION_Y['CROSS'])
+                self.npc_vehicle_pixmap = self.rotate_pixmap(self.npc_vehicle_pixmap, -90)
+
+            
         self.car_position = QtCore.QPoint(110, 530)
         self.middle_point = 835
 
@@ -89,7 +126,28 @@ class AnimatedCarWidget(QtWidgets.QWidget):
         reply = QMessageBox.question(self, 'Load Image', message,
                                      QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
         return reply == QMessageBox.Yes
-
+    
+    def ask_npc_direction(self):
+        message_box = QMessageBox()
+        # message_box.setWindowTitle("Message")
+        message_box.setText("Please select the driving direction for NPC vehicle.")
+        message_box.addButton(QMessageBox.Yes)
+        message_box.button(QMessageBox.Yes).setText("Opposite")
+        message_box.addButton(QMessageBox.No)
+        message_box.button(QMessageBox.No).setText("Cross")
+        choice = message_box.exec_()
+        if choice == QMessageBox.Yes:
+            return self.NPC_DIRECTION["OPPOSITE"]
+        elif choice == QMessageBox.No:
+            return self.NPC_DIRECTION["CROSS"]
+        else:
+            return ''
+        
+    def rotate_pixmap(self, pixmap, degrees):
+        transform = QtGui.QTransform().rotate(degrees)
+        rotated_pixmap = pixmap.transformed(transform, mode=QtCore.Qt.SmoothTransformation)
+        return rotated_pixmap
+    
     def change_speed(self, speed_value):
         self.speed = speed_value
         return str(self.speed) + ' km/h'
@@ -108,6 +166,8 @@ class AnimatedCarWidget(QtWidgets.QWidget):
             painter.drawPixmap(banana_position, self.banana_pixmap)
         if self.load_stop:
             painter.drawPixmap(self.stop_position, self.stop_pixmap)
+        if self.load_npc_vehicle:
+            painter.drawPixmap(self.npc_vehicle_position, self.npc_vehicle_pixmap)
         painter.drawPixmap(self.car_position, self.car_pixmap)
 
     def animate(self):
@@ -130,16 +190,36 @@ class AnimatedCarWidget(QtWidgets.QWidget):
 
         if near_banana and self.speed > 10:
             self.change_speed(10)
-            print("1001: reduce speed")  # record the console
+            print('1001' + ": " + self.LOG_CODES['1001'])  # record the console
 
         # Check if the car is near the stop sign
         if self.load_stop and self.car_position.x() >= self.stop_position.x() - 80:
             self.timer.stop()
-            print("1002: emergency stop")  # Reporting to the console
+            print('1002' + ": " + self.LOG_CODES['1002'])  # Reporting to the console
             self.destination_query()
             self.plot_track()  # Plot the trajectory
             return  # Stop the animation
-
+        
+        if self.load_npc_vehicle:
+            # NPC driving
+            if self.load_npc_vehicle and self.npc_vehicle_direction == self.NPC_DIRECTION["OPPOSITE"]:
+                self.npc_vehicle_position.setX(self.npc_vehicle_position.x() - self.npc_speed)
+            elif self.load_npc_vehicle and self.npc_vehicle_direction == self.NPC_DIRECTION["CROSS"]:
+                self.npc_vehicle_position.setY(self.npc_vehicle_position.y() + self.npc_speed)
+            # Check whether there will be a collision with NPC vehicle
+            if self.npc_vehicle_direction != self.NPC_DIRECTION["OPPOSITE"] and (
+                (
+                    abs(self.car_position.x() - self.npc_vehicle_position.x())
+                    < (self.speed + 20)
+                )
+                or abs(self.car_position.y() - self.npc_vehicle_position.y()) < self.speed
+            ):
+                self.timer.stop()
+                print('1003' + ": " + self.LOG_CODES['1003'])
+                self.destination_query()
+                self.plot_track()  # Plot the trajectory
+                return
+        
         if not self.middle_point_reached and self.car_position.x() >= self.middle_point - 80:
             self.timer.stop()
             self.show_direction_dialog()
@@ -150,6 +230,8 @@ class AnimatedCarWidget(QtWidgets.QWidget):
             if self.car_position.x() >= self.middle_point + 0:
                 self.direction = 'down'
                 self.turning_right = False
+                self.car_pixmap = self.rotate_pixmap(self.car_pixmap, 90)
+
             self.update()
             return
 
