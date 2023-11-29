@@ -1,6 +1,16 @@
 import sys
+import typing
 from PyQt5 import QtWidgets, QtGui, QtCore
-from PyQt5.QtWidgets import QMessageBox, QPushButton, QLabel, QDialog, QVBoxLayout
+from PyQt5.QtWidgets import (
+    QApplication,
+    QMainWindow,
+    QWidget,
+    QMessageBox,
+    QPushButton,
+    QLabel,
+    QDialog,
+    QVBoxLayout
+)
 import seaborn as sns
 import matplotlib.pyplot as plt
 
@@ -11,9 +21,10 @@ from constants import (
     DEFAULT_BANANA_IMG,
     DEFAULT_ROADBLOCK_IMG
 )
+from ConfigurationDialog import Ui_ConfigurationDialog
 
 
-class AnimatedCarWidget(QtWidgets.QWidget):
+class AnimatedCarWidget(QWidget):
     EXIT_CODE_REBOOT = -123  # for restarting application
     
     
@@ -328,27 +339,33 @@ class AnimatedCarWidget(QtWidgets.QWidget):
         plt.title('Car Track')
         plt.show(block=True)
 
+class ConfigDialogue(QDialog, Ui_ConfigurationDialog):
+    def __init__(self, *args, obj=None, **kwargs) -> None:
+        super(ConfigDialogue, self).__init__(*args, **kwargs)
+        self.setupUi(self)
 
-class Example(QtWidgets.QMainWindow):
+class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.initUI()
 
     def initUI(self):
+        configDialogue = ConfigDialogue()
+        configDialogue.show()
         self.central_widget = AnimatedCarWidget(self)
         self.setCentralWidget(self.central_widget)
         self.showMaximized()
-        self.setWindowTitle('AutoDriveSim')
-        self.show()
+        self.setWindowTitle('Autonomous Driving Simulation')
 
 
 def main():
     exitCode = AnimatedCarWidget.EXIT_CODE_REBOOT  # set exit code so code will run
     while exitCode == AnimatedCarWidget.EXIT_CODE_REBOOT:  # will keep rebooting the program until user selects quit (with different exit code)
-        app = QtWidgets.QApplication(sys.argv)
-        ex = Example()
-        exitCode = app.exec_()
-    sys.exit(app.exec_())
+        app = QApplication(sys.argv)
+        mainWindow = MainWindow()
+        mainWindow.show()
+        exitCode = app.exec()
+    sys.exit(app.exec())
 
 
 if __name__ == '__main__':
