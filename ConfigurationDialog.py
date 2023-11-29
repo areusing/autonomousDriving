@@ -1,66 +1,69 @@
-from PyQt5 import QtCore, QtWidgets
+from PyQt5 import QtWidgets
+from PyQt5.QtWidgets import (
+    QDialog,
+    QVBoxLayout,
+    QTableWidget,
+    QTableWidgetItem,
+    QPushButton
+)
 
 from constants import (
-    DEFAULT_SCENARIOS_CHECKED_POSITIONS,
-    DEFAULT_COLUMN_HEADERS_FOR_CONFIGURATION_DIALOG
+    DEFAULT_COLUMNS_FOR_CONFIGURATION_DIALOG,
+    DEFAULT_ROWS_FOR_CONFIGURATION_DIALOG
 )
 
 
-class Ui_ConfigurationDialog(object):
-    def setupUi(self, ConfigurationDialog):
-        ConfigurationDialog.setObjectName("ConfigurationDialog")
-        ConfigurationDialog.resize(800, 600)
+class ConfigurationDialog(QDialog):
+    def __init__(self):
+        super().__init__()
+
+        self.initUI()
+        self.selected_scenario = None
+
+    def initUI(self):
+        self.resize(1000,400)
 
         # Create a QVBoxLayout instance, QVBoxLayout will help the table
         # widget to take up the entie space available in the dialog
-        layout = QtWidgets.QVBoxLayout(ConfigurationDialog)
+        layout = QVBoxLayout(self)
 
         # Initialize tableWidget and set properties
-        self.tableWidget = QtWidgets.QTableWidget(ConfigurationDialog)
-        self.tableWidget.setObjectName("tableWidget")
-        self.tableWidget.setColumnCount(5)
+        self.tableWidget = QTableWidget(self)
+        self.tableWidget.setColumnCount(6)
         self.tableWidget.setRowCount(9)
-        self.tableWidget.setSortingEnabled(False)
 
-        # Setup for vertical and horizontal header items
-        self.setupHeaderItems()
-
-        # Adding checkboxes and setting flags for table items
+        # Setup for vertical and horizontal table items
         self.setupTableItems()
 
         # Set dynamic resize mode for the columns
         header = self.tableWidget.horizontalHeader()
         header.setSectionResizeMode(QtWidgets.QHeaderView.ResizeToContents)
 
+        # Select the first row by default
+        self.tableWidget.selectRow(0)
+
         # Add tableWidget to the layout
         layout.addWidget(self.tableWidget)
 
-        self.retranslateUi(ConfigurationDialog)
-        QtCore.QMetaObject.connectSlotsByName(ConfigurationDialog)
+        # Create and setup the save button
+        self.save_button = QPushButton("Save", self)
+        self.save_button.clicked.connect(self.save)
+        layout.addWidget(self.save_button)
 
     def setupTableItems(self):
-        # Adding checkboxes and setting flags for table items
-        for row in range(9):
-            for column in range(5):
-                item = QtWidgets.QTableWidgetItem()
-                flags = QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsEnabled
-                item.setFlags(flags)
-                check_state = QtCore.Qt.Checked if (row, column) in DEFAULT_SCENARIOS_CHECKED_POSITIONS else QtCore.Qt.Unchecked
-                item.setCheckState(check_state)
-                self.tableWidget.setItem(row, column, item)
+        self.tableWidget.setHorizontalHeaderLabels(DEFAULT_COLUMNS_FOR_CONFIGURATION_DIALOG)
 
-    def setupHeaderItems(self):
-        # Setup for vertical and horizontal header items
-        _translate = QtCore.QCoreApplication.translate
-        for i in range(9):
-            item = QtWidgets.QTableWidgetItem()
-            item.setText(_translate("ConfigurationDialog", f"Scenario {i + 1}"))
-            self.tableWidget.setVerticalHeaderItem(i, item)
+        for i, row in enumerate(DEFAULT_ROWS_FOR_CONFIGURATION_DIALOG):
+            for j, val in enumerate(row):
+                item = QTableWidgetItem(val)
+                # item.setFlags(QtCore.Qt.ItemIsSelectable)
+                self.tableWidget.setItem(i, j, item)
 
-        for i, header in enumerate(DEFAULT_COLUMN_HEADERS_FOR_CONFIGURATION_DIALOG):
-            item = QtWidgets.QTableWidgetItem()
-            item.setText(_translate("ConfigurationDialog", header))
-            self.tableWidget.setHorizontalHeaderItem(i, item)
-
-    def retranslateUi(self, ConfigurationDialog):
-        ConfigurationDialog.setWindowTitle(QtCore.QCoreApplication.translate("ConfigurationDialog", "ConfigurationDialog"))
+    def save(self):
+        selected_items = self.tableWidget.selectedItems()
+        if selected_items:
+            selected_row = self.tableWidget.row(selected_items[0])
+            self.selected_scenario = f"Scenario {selected_row + 1}"
+        else:
+            self.selected_scenario = None
+        self.accept()

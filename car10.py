@@ -20,7 +20,7 @@ from constants import (
     DEFAULT_BANANA_IMG,
     DEFAULT_ROADBLOCK_IMG
 )
-from ConfigurationDialog import Ui_ConfigurationDialog
+from ConfigurationDialog import ConfigurationDialog
 
 
 class AnimatedCarWidget(QWidget):
@@ -49,6 +49,7 @@ class AnimatedCarWidget(QWidget):
 
     def __init__(self, parent=None):
         super(AnimatedCarWidget, self).__init__(parent)
+        self.selected_scenario = "Scenario 1"
         self.crossroad_pixmap = QtGui.QPixmap(DEFAULT_CROSS_ROAD_IMG)
         self.car_pixmap = QtGui.QPixmap(DEFAULT_USER_VEHICLE_IMG).scaledToWidth(50)
         self.speed = 25  # default speed
@@ -150,7 +151,7 @@ class AnimatedCarWidget(QWidget):
         message_box.button(QMessageBox.Yes).setText("Opposite")
         message_box.addButton(QMessageBox.No)
         message_box.button(QMessageBox.No).setText("Cross")
-        choice = message_box.exec_()
+        choice = message_box.exec()
         if choice == QMessageBox.Yes:
             return self.NPC_DIRECTION["OPPOSITE"]
         elif choice == QMessageBox.No:
@@ -288,7 +289,7 @@ class AnimatedCarWidget(QWidget):
         layout.addWidget(btn_quit)
 
         self.dialog.setLayout(layout)
-        self.dialog.exec_()
+        self.dialog.exec()
 
     def destination_reached(self):
         sender = self.sender()
@@ -315,7 +316,7 @@ class AnimatedCarWidget(QWidget):
         layout.addWidget(btn_straight)
 
         self.dialog.setLayout(layout)
-        self.dialog.exec_()
+        self.dialog.exec()
 
     def on_direction_chosen(self):
         sender = self.sender()
@@ -338,23 +339,23 @@ class AnimatedCarWidget(QWidget):
         plt.title('Car Track')
         plt.show(block=True)
 
-class ConfigDialogue(QDialog, Ui_ConfigurationDialog):
-    def __init__(self, *args, obj=None, **kwargs) -> None:
-        super(ConfigDialogue, self).__init__(*args, **kwargs)
-        self.setupUi(self)
-
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.initUI()
 
     def initUI(self):
-        configDialogue = ConfigDialogue()
-        configDialogue.show()
         self.central_widget = AnimatedCarWidget(self)
+        self.central_widget.selected_scenario = self.get_configuration()
         self.setCentralWidget(self.central_widget)
         self.showMaximized()
         self.setWindowTitle('Autonomous Driving Simulation')
+
+    def get_configuration(self):
+        config_dialog = ConfigurationDialog()
+        config_dialog.exec_()  # This will block until the dialog is closed
+        config_dialog.close()
+        return config_dialog.selected_scenario
 
 
 def main():
