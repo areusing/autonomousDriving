@@ -345,18 +345,15 @@ class MainWindow(QMainWindow):
         self.initUI()
 
     def initUI(self):
-        self.central_widget = AnimatedCarWidget(self)
-        self.central_widget.selected_scenario = self.get_configuration()
-        self.setCentralWidget(self.central_widget)
-        self.showMaximized()
-        self.setWindowTitle('Autonomous Driving Simulation')
-
-    def get_configuration(self):
         config_dialog = ConfigurationDialog()
         config_dialog.exec_()  # This will block until the dialog is closed
         config_dialog.close()
-        return config_dialog.selected_scenario
-
+        self.central_widget = AnimatedCarWidget(self)
+        print(f"Selected Sceanrio: {config_dialog.selected_scenario}")
+        self.central_widget.selected_scenario = config_dialog.selected_scenario
+        self.setCentralWidget(self.central_widget)
+        self.showMaximized()
+        self.setWindowTitle('Autonomous Driving Simulation')
 
 def main():
     exitCode = AnimatedCarWidget.EXIT_CODE_REBOOT  # set exit code so code will run
