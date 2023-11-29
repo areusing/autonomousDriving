@@ -1,0 +1,5 @@
+PyQt5==5.15.10
+pyqt5-tools==5.15.9.3.3
+seaborn==0.13.0
+matplotlib==3.8.2
+black==23.11.0
