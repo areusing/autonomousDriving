@@ -21,8 +21,8 @@ class MainWindow(QMainWindow):
 
     def center_on_screen(self):
         resolution = QtWidgets.QDesktopWidget().screenGeometry()
-        self.move((resolution.width() / 2) - (self.frameSize().width() / 2),
-                  (resolution.height() / 2) - (self.frameSize().height() / 2))
+        self.move(int(resolution.width() / 2) - int(self.frameSize().width() / 2),
+                  int(resolution.height() / 2) - int(self.frameSize().height() / 2))
 
     def show(self):
         super().show()  # 调用基类的 show 方法
