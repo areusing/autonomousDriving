@@ -46,6 +46,7 @@ class AnimatedCarWidget(QWidget):
         self.npc_speed = DEFAULT_NPC_SPEED
         self.dec_button_pressed = False
         self.inc_button_pressed = False
+        self.newSpeed = self.speed
         self.init_speed_label()
         self.init_control_buttons()
 
@@ -164,24 +165,31 @@ class AnimatedCarWidget(QWidget):
         near_banana = self.load_banana and (
                 self.banana_rect.left() - 60 <= self.car_position.x() <= self.banana_rect.right()
         )
+        passed_banana = self.load_banana and (
+                self.car_position.x() >= self.banana_rect.right()
+        )
         if self.dec_button_pressed:
-            newSpeed = self.speed - 3
-            if newSpeed > 0:
-                self.speed = newSpeed
-                self.speed_info.setText(self.change_speed(newSpeed))
+            self.newSpeed = self.speed - 3
+            if self.newSpeed > 0:
+                self.speed = self.newSpeed
+                self.speed_info.setText(self.change_speed(self.newSpeed))
                 self.dec_button_pressed = False
 
         if self.inc_button_pressed:
-            newSpeed = self.speed + 3
-            self.change_speed(newSpeed)
-            self.speed_info.setText(self.change_speed(newSpeed))
+            self.newSpeed = self.speed + 3
+            self.change_speed(self.newSpeed)
+            self.speed_info.setText(self.change_speed(self.newSpeed))
             self.inc_button_pressed = False
 
         if near_banana and self.speed > 10:
-            newSpeed = 10
-            self.change_speed(newSpeed)
-            self.speed_info.setText(self.change_speed(newSpeed))
+            self.change_speed(10)
+            self.speed_info.setText(self.change_speed(10))
             print('1001' + ": " + LOG_CODES['1001'])  # record the console
+        elif passed_banana:
+            self.change_speed(self.newSpeed)
+            self.speed_info.setText(self.change_speed(self.newSpeed))
+            print('1001' + ": " + LOG_CODES['1001'])
+
 
         # Check if the car is near the stop sign
         if self.load_stop and self.car_position.x() >= self.stop_position.x() - 80:
