@@ -2,7 +2,7 @@ import sys
 from PyQt5.QtWidgets import QApplication, QMainWindow
 
 from animated_car_widget import AnimatedCarWidget
-
+from PyQt5 import QtWidgets
 
 class MainWindow(QMainWindow):
     """
@@ -17,7 +17,16 @@ class MainWindow(QMainWindow):
         self.central_widget = AnimatedCarWidget(self)
         self.setCentralWidget(self.central_widget)
         self.setWindowTitle('Autonomous Driving Simulation')
+        self.center_on_screen()
 
+    def center_on_screen(self):
+        resolution = QtWidgets.QDesktopWidget().screenGeometry()
+        self.move((resolution.width() / 2) - (self.frameSize().width() / 2),
+                  (resolution.height() / 2) - (self.frameSize().height() / 2))
+
+    def show(self):
+        super().show()  # 调用基类的 show 方法
+        self.center_on_screen()
 
 def main():
     """
