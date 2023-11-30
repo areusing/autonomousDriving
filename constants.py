@@ -78,9 +78,9 @@ SCENARIO_TO_CONFIGURATION_MAP = {
     "Scenario 4": {
         "UnavoidableObstacle": False,
         "AvoidableObstacle": False,
-        "MakeATurn": False,
+        "MakeATurn": True,
         "OtherCarOpposite": False,
-        "OtherCarCross": False,
+        "OtherCarCross": True,
     },
     "Scenario 5": {
         "UnavoidableObstacle": False,
