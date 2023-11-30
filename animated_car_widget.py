@@ -202,7 +202,7 @@ class AnimatedCarWidget(QWidget):
                             abs(self.car_position.x() - self.npc_vehicle_position.x())
                             < (self.speed + 20)
                     )
-                    or abs(self.car_position.y() - self.npc_vehicle_position.y()) < self.speed
+                    and abs(self.car_position.y() - self.npc_vehicle_position.y()) < self.speed
             ):
                 self.timer.stop()
                 print('1003' + ": " + LOG_CODES['1003'])
