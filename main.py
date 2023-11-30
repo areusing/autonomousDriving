@@ -16,7 +16,6 @@ class MainWindow(QMainWindow):
     def init_ui(self):
         self.central_widget = AnimatedCarWidget(self)
         self.setCentralWidget(self.central_widget)
-        self.showMaximized()
         self.setWindowTitle('Autonomous Driving Simulation')
 
 def main():
