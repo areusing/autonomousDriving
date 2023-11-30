@@ -18,17 +18,15 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(self.central_widget)
         self.setWindowTitle('Autonomous Driving Simulation')
 
+
 def main():
     """
     Main function to run the Autonomous Driving Simulation.
     It creates the main application and window, and manages the application lifecycle.
     """
-    exit_code = AnimatedCarWidget.EXIT_CODE_REBOOT  # Initial exit code for reboot
-    while exit_code == AnimatedCarWidget.EXIT_CODE_REBOOT:
-        app = QApplication(sys.argv)
-        main_window = MainWindow()
-        main_window.show()
-        exitCode = app.exec()
+    app = QApplication(sys.argv)
+    main_window = MainWindow()
+    main_window.show()
     sys.exit(app.exec())
 
 

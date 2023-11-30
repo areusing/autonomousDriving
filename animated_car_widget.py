@@ -1,6 +1,7 @@
 import sys
-from PyQt5 import QtWidgets, QtGui, QtCore
-from PyQt5.QtWidgets import QWidget, QPushButton, QLabel, QDialog, QVBoxLayout
+import os
+from PyQt5 import QtGui, QtCore
+from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QLabel, QDialog, QVBoxLayout
 
 from configuration_dialog import ConfigurationDialog
 from constants import (
@@ -23,8 +24,6 @@ class AnimatedCarWidget(QWidget):
     Animated Car Widget for Autonomous Driving Simulation.
     It represents the main interactive component of the simulation.
     """
-    EXIT_CODE_REBOOT = -123  # Exit code for restarting the application
-
     def __init__(self, parent=None):
         super().__init__(parent)
         self.load_configuration()
@@ -279,8 +278,7 @@ class AnimatedCarWidget(QWidget):
 
         if sender.text() == 'Restart':
             self.dialog.close()
-            QtWidgets.QApplication.exit(
-                AnimatedCarWidget.EXIT_CODE_REBOOT)  # will exit with the exit code set above & stay in while loop of main
+            os.execl(sys.executable, sys.executable, *sys.argv)
         else:
             self.timer.stop()
-            sys.exit()
+            QApplication.instance().quit()
