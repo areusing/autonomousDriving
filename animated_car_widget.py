@@ -207,9 +207,9 @@ class AnimatedCarWidget(QWidget):
             if SCENARIO_TO_CONFIGURATION_MAP[self.selected_scenario]["OtherCarCross"] and (
                     (
                             abs(self.car_position.x() - self.npc_vehicle_position.x())
-                            < (self.speed + 20)
+                            < (self.speed + 50)
                     )
-                    and abs(self.car_position.y() - self.npc_vehicle_position.y()) < self.speed
+                    and abs(self.car_position.y() - self.npc_vehicle_position.y()) < (self.speed + 50)
             ):
                 self.timer.stop()
                 print('1003' + ": " + LOG_CODES['1003'])
