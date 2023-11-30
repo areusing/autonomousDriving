@@ -12,5 +12,5 @@ $ sudo apt-get install libxcb-xinerama0
 ### To run the program / simulation
 
 ```bash
-$ python car10.py
+$ python main.py
 ```
