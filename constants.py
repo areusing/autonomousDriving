@@ -31,6 +31,8 @@ LOG_CODES = {
     '1002': "Unavoidable obstacle detected, emergency stop",
     '1003': "Potential collision detected, emergency stop"
 }
+DEFAULT_OPTIONS_INITIAL_DIALOG = ["Preset Scenario", "Customization"]
+
 
 DEFAULT_ROWS_FOR_CONFIGURATION_DIALOG = [
     ("Scenario 1", "☐", "☐", "☐", "☐", "☐"),
@@ -118,3 +120,17 @@ SCENARIO_TO_CONFIGURATION_MAP = {
         "OtherCarCross": False,
     },
 }
+
+DEFAULT_CUSTOMIZATION_COLUMNS = [
+    "Load Avoidable Obstacle",
+    "Load Unavoidable Obstacle",
+    "Make a Turn",
+    "Add Other Car",
+]
+DEFAULT_CUSTOMIZATION_COLUMNS_KEY_MAPPING = {
+    "AvoidableObstacle": DEFAULT_CUSTOMIZATION_COLUMNS[0],
+    "UnavoidableObstacle": DEFAULT_CUSTOMIZATION_COLUMNS[1],
+    "MakeATurn": DEFAULT_CUSTOMIZATION_COLUMNS[2],
+    "OtherCar": DEFAULT_CUSTOMIZATION_COLUMNS[3],
+}
+DEFAULT_CUSTOMIZATION_OTHER_CAR_OPTIONS = ["None", "Opposite", "Cross"]
