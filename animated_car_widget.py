@@ -4,6 +4,8 @@ from PyQt5 import QtGui, QtCore
 from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QLabel, QDialog, QVBoxLayout
 
 from configuration_dialog import ConfigurationDialog
+from initial_dialog import InitialDialog
+from customization_dialog import CustomizationDialog
 from constants import (
     DEFAULT_CAR_SPEED,
     DEFAULT_NPC_SPEED,
@@ -15,7 +17,9 @@ from constants import (
     DEFAULT_NPC_VEHICLE_IMG,
     DEFAULT_CROSS_ROAD_IMG,
     DEFAULT_BANANA_IMG,
-    DEFAULT_ROADBLOCK_IMG
+    DEFAULT_ROADBLOCK_IMG,
+    DEFAULT_OPTIONS_INITIAL_DIALOG,
+    DEFAULT_CUSTOMIZATION_COLUMNS_KEY_MAPPING
 )
 
 
@@ -26,16 +30,32 @@ class AnimatedCarWidget(QWidget):
     """
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.load_configuration()
+        self.load_initiaL_dialog()
+        if self.initial_scenario_mode == DEFAULT_OPTIONS_INITIAL_DIALOG[0]:
+            self.load_configuration()
+        elif self.initial_scenario_mode == DEFAULT_OPTIONS_INITIAL_DIALOG[1]:
+            self.load_customized_configuration()
         self.initialize_ui_elements()
         self.load_scenario_dependent_elements()
         self.init_ui()
+
+    def load_initiaL_dialog(self):
+        """ Load initial dialog which asks user to choose scenario mode. """
+        initial_dialog = InitialDialog()
+        initial_dialog.exec_()  # Blocks until the dialog is closed
+        self.initial_scenario_mode = initial_dialog.initial_scenario_mode
 
     def load_configuration(self):
         """ Load configuration settings from the Configuration Dialog. """
         config_dialog = ConfigurationDialog()
         config_dialog.exec_()  # Blocks until the dialog is closed
         self.selected_scenario = config_dialog.selected_scenario
+
+    def load_customized_configuration(self):
+        """ Load cutomized settings from the Customization Dialog. """
+        config_dialog = CustomizationDialog()
+        config_dialog.exec_()  # Blocks until the dialog is closed
+        self.customized_scenario = config_dialog.customized_scenario
 
     def initialize_ui_elements(self):
         """ Initialize UI elements like buttons, labels, and pixmaps. """
@@ -88,36 +108,87 @@ class AnimatedCarWidget(QWidget):
 
     def load_scenario_dependent_elements(self):
         # Load Avoidable Obstacle
-        self.load_banana = SCENARIO_TO_CONFIGURATION_MAP[self.selected_scenario]["AvoidableObstacle"]
+        self.load_banana = (
+            SCENARIO_TO_CONFIGURATION_MAP[self.selected_scenario]["AvoidableObstacle"]
+            if self.initial_scenario_mode == DEFAULT_OPTIONS_INITIAL_DIALOG[0]
+            else self.customized_scenario[
+                DEFAULT_CUSTOMIZATION_COLUMNS_KEY_MAPPING["AvoidableObstacle"]
+            ]
+        )
         if self.load_banana:
             self.banana_pixmap = QtGui.QPixmap(DEFAULT_BANANA_IMG).scaled(200, 50)
             self.banana_rect = QtCore.QRect(500, 530, 200, 50)
 
         # Load Unavoidable Obstacle
-        self.load_stop = SCENARIO_TO_CONFIGURATION_MAP[self.selected_scenario]["UnavoidableObstacle"]
+        self.load_stop = (SCENARIO_TO_CONFIGURATION_MAP[self.selected_scenario]["UnavoidableObstacle"]
+            if self.initial_scenario_mode == DEFAULT_OPTIONS_INITIAL_DIALOG[0]
+            else self.customized_scenario[
+                DEFAULT_CUSTOMIZATION_COLUMNS_KEY_MAPPING["UnavoidableObstacle"]
+            ]
+        )
         if self.load_stop:
             self.stop_pixmap = QtGui.QPixmap(DEFAULT_ROADBLOCK_IMG).scaled(50, 50)
             self.stop_position = QtCore.QPoint(1100, 530)  # Stop image position
 
         # Load NPC
         self.load_npc_vehicle = (
-            SCENARIO_TO_CONFIGURATION_MAP[self.selected_scenario]["OtherCarOpposite"]
-            or SCENARIO_TO_CONFIGURATION_MAP[self.selected_scenario]["OtherCarCross"])
+            (
+                SCENARIO_TO_CONFIGURATION_MAP[self.selected_scenario][
+                    "OtherCarOpposite"
+                ]
+                or SCENARIO_TO_CONFIGURATION_MAP[self.selected_scenario][
+                    "OtherCarCross"
+                ]
+            )
+            if self.initial_scenario_mode == DEFAULT_OPTIONS_INITIAL_DIALOG[0]
+            else (
+                self.customized_scenario[
+                    DEFAULT_CUSTOMIZATION_COLUMNS_KEY_MAPPING["OtherCar"]
+                ]
+            )
+            != "None"
+        )
+        self.npc_vehicle_direction = (
+            (
+                "Opposite"
+                if SCENARIO_TO_CONFIGURATION_MAP[self.selected_scenario][
+                    "OtherCarOpposite"
+                ]
+                else "Cross"
+                if SCENARIO_TO_CONFIGURATION_MAP[self.selected_scenario][
+                    "OtherCarCross"
+                ]
+                else ""
+            )
+            if self.initial_scenario_mode == DEFAULT_OPTIONS_INITIAL_DIALOG[0]
+            else (
+                self.customized_scenario[
+                    DEFAULT_CUSTOMIZATION_COLUMNS_KEY_MAPPING["OtherCar"]
+                ]
+            )
+        )
+
         if self.load_npc_vehicle:
             self.npc_vehicle_pixmap = QtGui.QPixmap(DEFAULT_NPC_VEHICLE_IMG).scaled(50, 50)
 
-            if SCENARIO_TO_CONFIGURATION_MAP[self.selected_scenario]["OtherCarOpposite"]:
+            if self.npc_vehicle_direction == 'Opposite':
                 self.npc_vehicle_position = QtCore.QPoint(
                     DEFAULT_NPC_POSITION_X['OPPOSITE'],
                     DEFAULT_NPC_POSITION_Y['OPPOSITE']
                 )
-            elif SCENARIO_TO_CONFIGURATION_MAP[self.selected_scenario]["OtherCarCross"]:
+            elif self.npc_vehicle_direction == 'Cross':
                 self.npc_vehicle_position = QtCore.QPoint(
                     DEFAULT_NPC_POSITION_X['CROSS'],
                     DEFAULT_NPC_POSITION_Y['CROSS']
                 )
                 self.npc_vehicle_pixmap = self.rotate_pixmap(self.npc_vehicle_pixmap, -90)
 
+        self.make_a_turn = (SCENARIO_TO_CONFIGURATION_MAP[self.selected_scenario]["MakeATurn"]
+            if self.initial_scenario_mode == DEFAULT_OPTIONS_INITIAL_DIALOG[0]
+            else self.customized_scenario[
+                DEFAULT_CUSTOMIZATION_COLUMNS_KEY_MAPPING["MakeATurn"]
+            ]
+        )
         self.car_position = QtCore.QPoint(110, 530)
         self.middle_point = 835
 
@@ -205,12 +276,12 @@ class AnimatedCarWidget(QWidget):
 
         if self.load_npc_vehicle:
             # NPC driving
-            if self.load_npc_vehicle and SCENARIO_TO_CONFIGURATION_MAP[self.selected_scenario]["OtherCarOpposite"]:
+            if self.load_npc_vehicle and self.npc_vehicle_direction == 'Opposite':
                 self.npc_vehicle_position.setX(self.npc_vehicle_position.x() - self.npc_speed)
-            elif self.load_npc_vehicle and SCENARIO_TO_CONFIGURATION_MAP[self.selected_scenario]["OtherCarCross"]:
+            elif self.load_npc_vehicle and self.npc_vehicle_direction == 'Cross':
                 self.npc_vehicle_position.setY(self.npc_vehicle_position.y() + self.npc_speed)
             # Check whether there will be a collision with NPC vehicle
-            if SCENARIO_TO_CONFIGURATION_MAP[self.selected_scenario]["OtherCarCross"] and (
+            if self.npc_vehicle_direction == 'Cross' and (
                     (
                             abs(self.car_position.x() - self.npc_vehicle_position.x())
                             < (self.speed + 50)
@@ -223,7 +294,7 @@ class AnimatedCarWidget(QWidget):
                 return
 
         if not self.middle_point_reached and self.car_position.x() >= self.middle_point - 80:
-            if SCENARIO_TO_CONFIGURATION_MAP[self.selected_scenario]["MakeATurn"]:
+            if self.make_a_turn:
                 self.turning_right = True
                 self.middle_point_reached = True
             else:
