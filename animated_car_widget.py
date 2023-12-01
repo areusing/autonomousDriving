@@ -284,7 +284,7 @@ class AnimatedCarWidget(QWidget):
             if self.npc_vehicle_direction == 'Cross' and (
                     (
                             abs(self.car_position.x() - self.npc_vehicle_position.x())
-                            < (self.speed + 50)
+                            < (self.speed + 80)
                     )
                     and abs(self.car_position.y() - self.npc_vehicle_position.y()) < (self.speed + 50)
             ):
