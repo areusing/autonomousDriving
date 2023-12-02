@@ -11,6 +11,8 @@ from constants import (
     DEFAULT_NPC_SPEED,
     DEFAULT_NPC_POSITION_X,
     DEFAULT_NPC_POSITION_Y,
+    DEFAULT_DISTINATION_POSITION_X,
+    DEFAULT_DISTINATION_POSITION_Y,
     LOG_CODES,
     SCENARIO_TO_CONFIGURATION_MAP,
     DEFAULT_USER_VEHICLE_IMG,
@@ -18,6 +20,7 @@ from constants import (
     DEFAULT_CROSS_ROAD_IMG,
     DEFAULT_BANANA_IMG,
     DEFAULT_ROADBLOCK_IMG,
+    DEFAULT_DISTINATION_IMG,
     DEFAULT_OPTIONS_INITIAL_DIALOG,
     DEFAULT_CUSTOMIZATION_COLUMNS_KEY_MAPPING
 )
@@ -68,6 +71,7 @@ class AnimatedCarWidget(QWidget):
         self.newSpeed = self.speed
         self.init_speed_label()
         self.init_control_buttons()
+        self.init_distination_pixmap()
 
     def init_speed_label(self):
         """ Initialize the speed label displaying the car's speed. """
@@ -105,6 +109,10 @@ class AnimatedCarWidget(QWidget):
 
     def increase_button_pressed(self):
         self.inc_button_pressed = True
+
+    def init_distination_pixmap(self):
+        """ Initialize the distination sign. """
+        self.distination_pixmap = QtGui.QPixmap(DEFAULT_DISTINATION_IMG).scaledToWidth(105)
 
     def load_scenario_dependent_elements(self):
         # Load Avoidable Obstacle
@@ -189,6 +197,19 @@ class AnimatedCarWidget(QWidget):
                 DEFAULT_CUSTOMIZATION_COLUMNS_KEY_MAPPING["MakeATurn"]
             ]
         )
+
+        if self.make_a_turn:
+            self.distination_position = QtCore.QPoint(
+                    DEFAULT_DISTINATION_POSITION_X['TURN'],
+                    DEFAULT_DISTINATION_POSITION_Y['TURN']
+                )
+        else:
+            self.distination_position = QtCore.QPoint(
+                    DEFAULT_DISTINATION_POSITION_X['STRAIGHT'],
+                    DEFAULT_DISTINATION_POSITION_Y['STRAIGHT']
+                )
+            self.distination_pixmap = self.rotate_pixmap(self.distination_pixmap, 90)
+
         self.car_position = QtCore.QPoint(110, 530)
         self.middle_point = 835
 
@@ -228,6 +249,7 @@ class AnimatedCarWidget(QWidget):
             painter.drawPixmap(self.stop_position, self.stop_pixmap)
         if self.load_npc_vehicle:
             painter.drawPixmap(self.npc_vehicle_position, self.npc_vehicle_pixmap)
+        painter.drawPixmap(self.distination_position, self.distination_pixmap)
         painter.drawPixmap(self.car_position, self.car_pixmap)
 
     def animate(self):
