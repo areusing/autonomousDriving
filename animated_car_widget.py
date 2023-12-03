@@ -69,6 +69,7 @@ class AnimatedCarWidget(QWidget):
         self.dec_button_pressed = False
         self.inc_button_pressed = False
         self.newSpeed = self.speed
+        self.passing = False
         self.init_speed_label()
         self.init_control_buttons()
         self.init_distination_pixmap()
@@ -290,11 +291,15 @@ class AnimatedCarWidget(QWidget):
                 self.inc_button_pressed = False
 
         # Check if the car is near the stop sign
-        if self.load_stop and self.car_position.x() >= self.stop_position.x() - 80:
+        if self.load_stop and self.passing == False and (self.stop_position.x() - 80 <= self.car_position.x() < self.stop_position.x() + 50):
             self.timer.stop()
             print('1002' + ": " + LOG_CODES['1002'])  # Reporting to the console
-            self.destination_query()
-            return  # Stop the animation
+            self.unavoidable_o_query()  # ask the user what they want to do
+            self.passing = True
+
+        if self.passing and self.car_position.x() > self.stop_position.x() + 50:
+            self.car_position.setY(self.car_position.y() + 50)
+            self.passing = False
 
         if self.load_npc_vehicle:
             # NPC driving
@@ -355,6 +360,33 @@ class AnimatedCarWidget(QWidget):
                 self.timer.stop()
                 self.destination_query()
         self.update()
+
+    def unavoidable_o_query(self):
+        self.dialog = QDialog(self)
+        self.dialog.setWindowTitle('Unavoidable Obstacle')
+        layout = QVBoxLayout()
+
+        btn_continue = QPushButton('Drive Around Obstacle?', self.dialog)
+        btn_continue.clicked.connect(self.change_lanes)
+        layout.addWidget(btn_continue)
+
+        btn_stop = QPushButton('Stop', self.dialog)
+        btn_stop.clicked.connect(self.change_lanes)
+        layout.addWidget(btn_stop)
+
+        self.dialog.setLayout(layout)
+        self.dialog.exec()
+
+    def change_lanes(self):
+        sender = self.sender()
+
+        if sender.text() == 'Drive Around Obstacle?':
+            self.dialog.close()
+            self.car_position.setY(self.car_position.y() - 50)  # change lanes
+            self.passing = True  # set state to passing
+            self.timer.start(100)
+        elif sender.text() == 'Stop':
+            QApplication.instance().quit()
 
     def destination_query(self):
         self.dialog = QDialog(self)
